@@ -70,9 +70,36 @@ button:active {
 }
 .card h3 {
     margin-top: 0;
-    margin-bottom: 10px;
+    margin-bottom: 4px;
     color: #d84b65;
     font-size: 18px;
+}
+.card .score-container {
+    display: flex;
+    align-items: center;
+    gap: 6px;
+    margin-bottom: 12px;
+}
+.card .score-info {
+    font-size: 13px;
+    color: #8a7a7c;
+    font-weight: bold;
+}
+.btn-edit-score {
+    background: none;
+    border: none;
+    padding: 0 4px;
+    margin: 0;
+    width: auto;
+    font-size: 14px;
+    cursor: pointer;
+    opacity: 0.7;
+    transition: transform 0.2s, opacity 0.2s;
+}
+.btn-edit-score:hover {
+    opacity: 1;
+    transform: scale(1.2);
+    background: none;
 }
 .card b {
     color: #ff6b8b;
@@ -98,7 +125,6 @@ button:active {
     line-height: 1.5;
 }
 
-/* 꽃 업데이트 버튼: 흰색 배경에 검은색 글씨 */
 .btn-open-create {
     background: #ffffff;
     color: #333333;
@@ -109,7 +135,6 @@ button:active {
     background: #f7f7f7;
 }
 
-/* 미보유 꽃 버튼: 차분하고 고급스러운 연한 보라/핑크 톤 */
 .btn-unowned {
     background: #fdf0f5;
     color: #d84b65;
@@ -120,7 +145,6 @@ button:active {
     background: #fae1eb;
 }
 
-/* 팝업창 뒤편 어두운 배경 */
 .popup-overlay {
     display: none;
     position: fixed;
@@ -134,7 +158,6 @@ button:active {
     align-items: center;
 }
 
-/* 팝업 하얀 상자 */
 .popup-content {
     background: #fff;
     width: 90%;
@@ -149,7 +172,6 @@ button:active {
     animation: popupZoom 0.25s ease-out;
 }
 
-/* 미보유 꽃 전용 팝업창 */
 .popup-content-unowned {
     background: #fff;
     width: 90%;
@@ -183,15 +205,14 @@ button:active {
     font-size: 20px;
     text-align: center;
 }
-.popup-content button#btnCreate {
+.popup-content button#btnCreate, .popup-content button#btnSaveScore {
     background: #4CAF50;
     margin-top: 15px;
 }
-.popup-content button#btnCreate:hover {
+.popup-content button#btnCreate:hover, .popup-content button#btnSaveScore:hover {
     background: #45a049;
 }
 
-/* 팝업창 닫기 버튼 */
 .btn-close {
     background: #eee;
     color: #666;
@@ -202,7 +223,6 @@ button:active {
     background: #ddd;
 }
 
-/* 미보유 꽃 카드 스타일 */
 .unowned-card {
     margin-top: 10px;
     padding: 12px;
@@ -217,7 +237,6 @@ button:active {
     font-size: 15px;
 }
 
-/* ✨ 최근 등록 목록 스타일 */
 .recent-list-container {
     margin-top: 15px;
     border-top: 1px dashed #ffccd5;
@@ -260,7 +279,6 @@ button:active {
     background: #d84b65;
 }
 
-/* ✨ 커스텀 "업뎃 완료" 알림 팝업 전용 스타일 */
 .success-popup {
     text-align: center;
     padding: 30px 25px;
@@ -305,7 +323,6 @@ button:active {
     <input id="newOwner" placeholder="소유자 이름을 적어주세요 (예: 이매)">
     <button id="btnCreate" onclick="addNewFlower()">업뎃야-호</button>
     
-    <!-- 최근 등록한 꽃 리스트 영역 -->
     <div class="recent-list-container">
       <div class="recent-title">📋 최근 등록 목록 (최대 10개)</div>
       <div id="recentList"></div>
@@ -315,7 +332,18 @@ button:active {
   </div>
 </div>
 
-<!-- 🌸 [2. 미보유 꽃 전용 팝업창] -->
+<!-- 🌸 [2. 경기 점수 수정 팝업창] -->
+<div id="scorePopupOverlay" class="popup-overlay" onclick="closePopupOuter(event, 'scorePopupOverlay')">
+  <div class="popup-content">
+    <h3>✏️ 경기 점수 수정</h3>
+    <div id="targetFlowerTitle" class="info" style="font-weight: bold; color: #ff6b8b; margin-bottom: 10px;"></div>
+    <input id="editScoreInput" type="number" placeholder="변경할 경기 점수를 입력하세요 (예: 28)">
+    <button id="btnSaveScore" onclick="saveScoreUpdate()">점수 저장하기</button>
+    <button class="btn-close" onclick="closePopup('scorePopupOverlay')">취소</button>
+  </div>
+</div>
+
+<!-- 🌸 [3. 미보유 꽃 전용 팝업창] -->
 <div id="unownedPopupOverlay" class="popup-overlay" onclick="closePopupOuter(event, 'unownedPopupOverlay')">
   <div class="popup-content-unowned">
     <h3>🍂 미보유 꽃 목록</h3>
@@ -327,7 +355,7 @@ button:active {
   </div>
 </div>
 
-<!-- 🌸 [3. "업뎃 완료" 커스텀 팝업창] -->
+<!-- 🌸 [4. "업뎃 완료" 커스텀 팝업창] -->
 <div id="successPopupOverlay" class="popup-overlay" onclick="closePopupOuter(event, 'successPopupOverlay')">
   <div class="popup-content success-popup">
     <h3>업뎃 완료</h3>
@@ -339,23 +367,46 @@ button:active {
 const SHEET_ID="1HwHxN8xPGIiNss8EwSetaY9u7IYE6vtQcqKdvTlzHQw";
 const URL=`https://docs.google.com/spreadsheets/d/${SHEET_ID}/gviz/tq?tqx=out:json`;
 
-const GOOGLE_WEB_APP_URL = "https://script.google.com/macros/s/AKfycbxAfCYsAfsl78hgnOe6eigB1uyMF3IUH-n1Y9_SmcFSI14LeCMhG9qjPfRJ150NqVkZrw/exec";
+// 💡 새로운 구글 앱스 스크립트 웹 앱 URL 적용
+const GOOGLE_WEB_APP_URL = "https://script.google.com/macros/s/AKfycbwTqY3flCVzoqhoxZ3FInorVatqLg8SRAVc33xkqBwKm_arzS0QCt5RPaKMB5JM5mjWgA/exec";
 
-let table=null;
+let tableRows = null;
+let headerCols = null;
+let currentEditingFlower = "";
 
-const norm = s => (s !== null && s !== undefined ? String(s) : "").replace(/\s+/g, "");
+const norm = s => (s !== null && s !== undefined ? String(s) : "").replace(/\s+/g, "").toLowerCase();
 
 const getSafeValue = (cell) => {
   if (!cell) return "";
-  if (cell.f !== undefined && cell.v !== null) return String(cell.f);
+  if (cell.f !== undefined && cell.f !== null) return String(cell.f);
   if (cell.v !== undefined && cell.v !== null) return String(cell.v);
+  if (cell.label !== undefined && cell.label !== null) return String(cell.label);
   return "";
+};
+
+const isOwnedMark = (mark) => {
+  if (!mark) return false;
+  const val = String(mark).trim().toUpperCase();
+  return val === "O" || val === "○" || val === "⭕" || val === "TRUE" || val === "0";
 };
 
 async function load(){
  const txt=await (await fetch(URL)).text();
  const json=JSON.parse(txt.substring(47,txt.length-2));
- table=json.table.rows;
+ tableRows = json.table.rows;
+ headerCols = json.table.cols;
+}
+
+function getNicknameHeader(colIndex) {
+  if (tableRows && tableRows.length > 0 && tableRows[0].c && tableRows[0].c[colIndex]) {
+    const val = getSafeValue(tableRows[0].c[colIndex]);
+    if (val && !isOwnedMark(val)) return val.trim();
+  }
+  if (headerCols && headerCols[colIndex]) {
+    const col = headerCols[colIndex];
+    if (col.label) return String(col.label).trim();
+  }
+  return "";
 }
 
 async function searchFlower(){
@@ -377,10 +428,12 @@ async function searchFlower(){
 
  let resultsHTML = "";
  let matchCount = 0;
- const header=table[0].c;
 
- for(let r=1; r<table.length; r++){
-   const cells=table[r].c;
+ const startRow = (tableRows[0] && tableRows[0].c && isOwnedMark(getSafeValue(tableRows[0].c[2]))) ? 0 : 1;
+ const totalCols = headerCols ? headerCols.length : (tableRows[0] && tableRows[0].c ? tableRows[0].c.length : 0);
+
+ for(let r = startRow; r < tableRows.length; r++){
+   const cells = tableRows[r].c;
    if(!cells || !cells[0]) continue;
    
    const flowerName = getSafeValue(cells[0]); 
@@ -388,17 +441,32 @@ async function searchFlower(){
 
    if(normFlowerName.includes(key)){
       matchCount++;
-      let owners=[];
       
-      for(let c=1; c<header.length; c++){
-         const mark=getSafeValue(cells[c]).trim();
-         if(["O","o","○","◯","⭕","TRUE"].includes(mark)){
-            owners.push(getSafeValue(header[c]));
+      const rawScore = cells[1] ? getSafeValue(cells[1]).trim() : "";
+      const scoreText = rawScore !== "" ? `경기 점수 : ${rawScore}점` : "경기 점수 : 정보 없음";
+
+      let owners = [];
+      
+      for(let c = 2; c < totalCols; c++){
+         const cellValue = cells[c] ? getSafeValue(cells[c]) : "";
+         
+         if(isOwnedMark(cellValue)){
+            const nickname = getNicknameHeader(c);
+            if(nickname) {
+               owners.push(nickname);
+            }
          }
       }
       
+      const safeFlowerName = flowerName.replace(/'/g, "\\'");
+      const safeScore = rawScore.replace(/'/g, "\\'");
+
       resultsHTML += `<div class="card">
          <h3>✨ ${flowerName}</h3>
+         <div class="score-container">
+            <span class="score-info">${scoreText}</span>
+            <button class="btn-edit-score" onclick="openScorePopup('${safeFlowerName}', '${safeScore}')" title="경기 점수 수정">✏️</button>
+         </div>
          <b>🌸 소유자 목록</b>
          <div class="owners-list">
             ${owners.length ? owners.join("<br>") : "등록된 소유자가 없습니다."}
@@ -413,6 +481,53 @@ async function searchFlower(){
  }
 
  out.innerHTML = resultsHTML;
+}
+
+// 점수 수정 팝업 열기
+function openScorePopup(flowerName, currentScore) {
+  currentEditingFlower = flowerName;
+  document.getElementById("targetFlowerTitle").innerText = `[${flowerName}]`;
+  document.getElementById("editScoreInput").value = currentScore;
+  document.getElementById("scorePopupOverlay").style.display = "flex";
+}
+
+// 점수 저장 요청
+async function saveScoreUpdate() {
+  const scoreInput = document.getElementById("editScoreInput").value.trim();
+  const btn = document.getElementById("btnSaveScore");
+
+  if (scoreInput === "") {
+    alert("변경할 점수를 입력해 주세요!");
+    return;
+  }
+
+  btn.disabled = true;
+  btn.innerText = "저장 중...⏳";
+
+  try {
+    await fetch(GOOGLE_WEB_APP_URL, {
+      method: 'POST',
+      mode: 'no-cors',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({
+        action: "updateScore",
+        flowerName: currentEditingFlower,
+        score: scoreInput
+      })
+    });
+
+    closePopup("scorePopupOverlay");
+    tableRows = null; 
+    document.getElementById("successPopupOverlay").style.display = "flex";
+    searchFlower(); 
+
+  } catch (error) {
+    alert("❌ 점수 업데이트 실패! 인터넷 연결을 확인해주세요.");
+    console.error(error);
+  } finally {
+    btn.disabled = false;
+    btn.innerText = "점수 저장하기";
+  }
 }
 
 async function openUnownedPopup() {
@@ -433,10 +548,12 @@ async function openUnownedPopup() {
 
   let resultsHTML = "";
   let unownedCount = 0;
-  const header = table[0].c;
+  
+  const startRow = (tableRows[0] && tableRows[0].c && isOwnedMark(getSafeValue(tableRows[0].c[2]))) ? 0 : 1;
+  const totalCols = headerCols ? headerCols.length : (tableRows[0] && tableRows[0].c ? tableRows[0].c.length : 0);
 
-  for (let r = 1; r < table.length; r++) {
-    const cells = table[r].c;
+  for (let r = startRow; r < tableRows.length; r++) {
+    const cells = tableRows[r].c;
     if (!cells || !cells[0]) continue;
     
     const flowerName = getSafeValue(cells[0]);
@@ -444,9 +561,9 @@ async function openUnownedPopup() {
 
     let hasOwner = false;
     
-    for (let c = 1; c < header.length; c++) {
-       const mark = getSafeValue(cells[c]).trim();
-       if (["O", "o", "○", "◯", "⭕", "TRUE"].includes(mark)) {
+    for (let c = 2; c < totalCols; c++) {
+       const cellValue = cells[c] ? getSafeValue(cells[c]) : "";
+       if (isOwnedMark(cellValue)) {
           hasOwner = true;
           break; 
        }
@@ -488,7 +605,6 @@ function closePopupOuter(event, overlayId) {
   }
 }
 
-/* 최근 등록 데이터 처리 함수 */
 function getRecentFlowers() {
   const data = localStorage.getItem("recentFlowers");
   return data ? JSON.parse(data) : [];
@@ -534,7 +650,6 @@ async function deleteRecentFlower(index) {
   }
 
   try {
-    // 구글 앱스 스크립트로 삭제(action: "delete") 요청 전송
     await fetch(GOOGLE_WEB_APP_URL, {
       method: 'POST',
       mode: 'no-cors',
@@ -546,11 +661,10 @@ async function deleteRecentFlower(index) {
       })
     });
 
-    // 화면의 최근 목록에서 지우기
     list.splice(index, 1);
     localStorage.setItem("recentFlowers", JSON.stringify(list));
     renderRecentList();
-    table = null; // 검색 캐시 초기화
+    tableRows = null;
     alert("삭제 처리되었습니다");
   } catch (error) {
     alert("❌ 삭제 처리 실패! 인터넷 연결을 확인해주세요.");
@@ -578,8 +692,8 @@ async function addNewFlower() {
     let isExist = false;
     let exactFlowerName = name;
 
-    for (let r = 1; r < table.length; r++) {
-      const cells = table[r].c;
+    for (let r = 0; r < tableRows.length; r++) {
+      const cells = tableRows[r].c;
       if (!cells || !cells[0]) continue;
       
       const sheetFlowerName = getSafeValue(cells[0]);
@@ -603,16 +717,14 @@ async function addNewFlower() {
       })
     });
     
-    // 최근 등록 목록 저장 및 UI 갱신
     saveRecentFlower(exactFlowerName, owner);
     renderRecentList();
 
     document.getElementById("newName").value = "";
     document.getElementById("newOwner").value = "";
     
-    table = null; // 캐시 리셋
+    tableRows = null;
     
-    // 💡 팝업을 닫지 않고 완료 팝업창만 표시 (직접 '닫기' 눌러야 닫힘)
     document.getElementById("successPopupOverlay").style.display = "flex";
     
   } catch (error) {
